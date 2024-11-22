@@ -1,36 +1,17 @@
-#------
-#ArUcoマーカー受信サーバー
-#------
+from flask import Flask, request, jsonify
 
-import asyncio
-import websockets
-import json
+app = Flask(__name__)
 
-# WebSocketサーバーの処理
-async def server(websocket, path):
-    print("Client connected")
+@app.route('/', methods=['POST'])
+def receive_data():
+    data = request.get_json()
+    print(f"Received JSON data: {data}")
 
-    try:
-        # クライアントからのメッセージを受信
-        async for message in websocket:
-            data = json.loads(message)
-            print(f"Received JSON data: {data}")
+    # JSONファイルに書き出し
+    with open('data.json', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False)
 
-            # JSONファイルに書き出し
-            with open('data.json', 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False)
-
-            # クライアントにレスポンスを送信（オプション）
-            response = json.dumps({"message": "Data received!"})
-            await websocket.send(response)
-
-    except websockets.ConnectionClosed as e:
-        print("Client disconnected")
-
-# WebSocketサーバーを起動
-async def main():
-    async with websockets.serve(server, "160.16.151.12", 5000):
-        await asyncio.Future()  # 無限に待機
+    return jsonify({"message": "Data received!"})
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run(host="160.16.151.12", port=5000)
